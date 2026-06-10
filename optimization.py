@@ -1,56 +1,89 @@
+import pandas as pd
+import math
 from ortools.linear_solver import pywraplp
 
-def rotayi_optimize_et(hedef_desi):
-    print(f"\n--- GOOGLE OR-TOOLS OPTİMİZASYON MOTORU ---")
-    print(f"Taşınacak Hedef Kargo: {hedef_desi} Desi\n")
+def mesafe_hesapla(cikis, varis, df_koordinat):
+    try:
+        cikis_temiz = str(cikis).strip().upper()
+        varis_temiz = str(varis).strip().upper()
+        
+        temiz_sutun = df_koordinat['Transfer Merkezi'].astype(str).str.strip().str.upper()
+        
+        enlem1 = df_koordinat.loc[temiz_sutun == cikis_temiz, 'Enlem'].values[0]
+        boylam1 = df_koordinat.loc[temiz_sutun == cikis_temiz, 'Boylam'].values[0]
+        
+        enlem2 = df_koordinat.loc[temiz_sutun == varis_temiz, 'Enlem'].values[0]
+        boylam2 = df_koordinat.loc[temiz_sutun == varis_temiz, 'Boylam'].values[0]
+        
+        R = 6371.0 
+        dlat = math.radians(enlem2 - enlem1)
+        dlon = math.radians(boylam2 - boylam1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(enlem1)) * math.cos(math.radians(enlem2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        
+        gercek_mesafe = R * c
+        return gercek_mesafe
+        
+    except IndexError:
+        print(f"[UYARI] {cikis} veya {varis} koordinat tablosunda bulunamadı! Varsayılan değer atanıyor.")
+        return 500
+
+def rotayi_optimize_et(cikis_sehri, varis_sehri, hedef_desi):
+    df_maliyet = pd.read_excel('Araç_Kapasite_Maliyet.xlsx')
+    df_koordinat = pd.read_excel('Koordinatlar v2.xlsx')
+    df_filo = pd.read_excel('Kiralık_Araçlar.xlsx')
+
+    km_mesafe = mesafe_hesapla(cikis_sehri, varis_sehri, df_koordinat)
+
+    tir_row = df_maliyet[df_maliyet['Araç Adı'] == 'Tır'].iloc[0]
+    kamyon_row = df_maliyet[df_maliyet['Araç Adı'] == 'Kamyon'].iloc[0]
+
+    tir_kapasite = tir_row['Kapasite (desi)']
+    kamyon_kapasite = kamyon_row['Kapasite (desi)']
+
+    kiralik_tir_fiyat = tir_row['Kiralık Araç Günlük Kira (TL)'] + (km_mesafe * tir_row['Kiralık Araç Kilometre Başına Maliyet (TL)'])
+    spot_tir_fiyat = tir_row['Spot Araç Sabit Günlük Maliyet (TL)'] + (km_mesafe * tir_row['Spot Kilometre Başına Maliyet (TL)'])
+    
+    kiralik_kamyon_fiyat = kamyon_row['Kiralık Araç Günlük Kira (TL)'] + (km_mesafe * kamyon_row['Kiralık Araç Kilometre Başına Maliyet (TL)'])
+    spot_kamyon_fiyat = kamyon_row['Spot Araç Sabit Günlük Maliyet (TL)'] + (km_mesafe * kamyon_row['Spot Kilometre Başına Maliyet (TL)'])
+
+    filo_durumu = df_filo[(df_filo['Çıkış Transfer Merkezi'] == cikis_sehri) & (df_filo['Varış Transfer Merkezi'] == varis_sehri)]
+    
+    max_kiralik_tir = filo_durumu[filo_durumu['Araç Türü'] == 'Tır']['Araç sayısı'].sum() if not filo_durumu.empty else 0
+    max_kiralik_kamyon = filo_durumu[filo_durumu['Araç Türü'] == 'Kamyon']['Araç sayısı'].sum() if not filo_durumu.empty else 0
+
 
     solver = pywraplp.Solver.CreateSolver('SCIP')
-    if not solver:
-        print("Çözücü başlatılamadı!")
-        return
 
-    sabit_tir_kapasite = 15000
-    sabit_tir_maliyet = 10000    
-    
-    sabit_kamyon_kapasite = 5000
-    sabit_kamyon_maliyet = 4000  
-    
-    spot_tir_kapasite = 15000
-    spot_tir_maliyet = 18000    
-    
-    spot_kamyon_kapasite = 5000
-    spot_kamyon_maliyet = 7500   
-
-    x_sabit_tir = solver.IntVar(0, 5, 'Sabit_Tir')       # Filomuzda max 5 tır var diyelim
-    x_sabit_kamyon = solver.IntVar(0, 5, 'Sabit_Kamyon') # Filomuzda max 5 kamyon var
-    x_spot_tir = solver.IntVar(0, 100, 'Spot_Tir')       # Paramız varsa sınırsız kiralayabiliriz
+    x_kiralik_tir = solver.IntVar(0, int(max_kiralik_tir), 'Kiralik_Tir')
+    x_kiralik_kamyon = solver.IntVar(0, int(max_kiralik_kamyon), 'Kiralik_Kamyon')
+    x_spot_tir = solver.IntVar(0, 100, 'Spot_Tir')
     x_spot_kamyon = solver.IntVar(0, 100, 'Spot_Kamyon')
 
     solver.Add(
-        (x_sabit_tir * sabit_tir_kapasite) + 
-        (x_sabit_kamyon * sabit_kamyon_kapasite) + 
-        (x_spot_tir * spot_tir_kapasite) + 
-        (x_spot_kamyon * spot_kamyon_kapasite) >= hedef_desi
+        (x_kiralik_tir * tir_kapasite) + 
+        (x_kiralik_kamyon * kamyon_kapasite) + 
+        (x_spot_tir * tir_kapasite) + 
+        (x_spot_kamyon * kamyon_kapasite) >= hedef_desi
     )
+
     solver.Minimize(
-        (x_sabit_tir * sabit_tir_maliyet) + 
-        (x_sabit_kamyon * sabit_kamyon_maliyet) + 
-        (x_spot_tir * spot_tir_maliyet) + 
-        (x_spot_kamyon * spot_kamyon_maliyet)
+        (x_kiralik_tir * kiralik_tir_fiyat) + 
+        (x_kiralik_kamyon * kiralik_kamyon_fiyat) + 
+        (x_spot_tir * spot_tir_fiyat) + 
+        (x_spot_kamyon * spot_kamyon_fiyat)
     )
 
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
-        print("MÜKEMMEL ÇÖZÜM BULUNDU! İşte Atama Planı:")
-        print(f"Kendi Tırlarımız (15K Desi)    : {int(x_sabit_tir.solution_value())} adet")
-        print(f"Kendi Kamyonlarımız (5K Desi)  : {int(x_sabit_kamyon.solution_value())} adet")
-        print(f"Kiralık Spot Tırlar (15K Desi) : {int(x_spot_tir.solution_value())} adet")
-        print(f"Kiralık Spot Kamyonlar (5K D.) : {int(x_spot_kamyon.solution_value())} adet")
+        print(f"kendi Kiralık Tırımız ({tir_kapasite} Desi)   : {int(x_kiralik_tir.solution_value())} adetkullanılacak")
+        print(f"kendi Kiralık Kamyonumuz ({kamyon_kapasite} D.): {int(x_kiralik_kamyon.solution_value())} adet kullanılacak")
+        print(f"dışarıdan Spot Tır ({tir_kapasite} Desi)    : {int(x_spot_tir.solution_value())} adet KIRALANACAK")
+        print(f"dışarıdan Spot Kamyon ({kamyon_kapasite} D.) : {int(x_spot_kamyon.solution_value())} adet KIRALANACAK")
         
         toplam_fatura = solver.Objective().Value()
-        print(f"\n--> TOPLAM OPERASYON MALİYETİ: {toplam_fatura:,.2f} TL")
+        print(f"\n--> TOPLAM OPERASYON MALIYETI: {toplam_fatura:,.2f} TL")
     else:
-        print("Matematiksel bir çözüm bulunamadı. Kısıtları kontrol et.")
+        print("hata")
 
-rotayi_optimize_et(26445)
