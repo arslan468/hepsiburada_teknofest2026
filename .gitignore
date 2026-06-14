@@ -1,2 +1,3 @@
 env/
-todolist.md
+todolist.md__pycache__/
+*.xlsx

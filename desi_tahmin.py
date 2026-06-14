@@ -251,7 +251,15 @@ def _tahmin_satiri_olustur(cikis: str, varis: str, tarih_str: str,
     # Sadece hedef tarihten önceki verileri kullan (veri sızıntısını önle)
     df_gecmis = df_rota[df_rota[SUTUN_TARIH] < tarih]
 
-    vals = df_gecmis[SUTUN_TALEP].values if len(df_gecmis) > 0 else np.array([12000.0])
+    if len(df_gecmis) > 0:
+        vals = df_gecmis[SUTUN_TALEP].values
+    else:
+        # Fallback to the mean of the specific departure city, or global mean if unknown
+        city_mean = df_talep[df_talep[SUTUN_CIKIS].astype(str).str.strip().str.upper() == cikis_temiz][SUTUN_TALEP].mean()
+        if pd.isna(city_mean):
+            city_mean = df_talep[SUTUN_TALEP].mean()
+        vals = np.array([city_mean])
+
     n    = len(vals)
     genel_ort = float(np.mean(vals))
 
@@ -269,9 +277,9 @@ def _tahmin_satiri_olustur(cikis: str, varis: str, tarih_str: str,
     mevsim = {12: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1,
                6: 2, 7: 2, 8: 2, 9: 3, 10: 3, 11: 3}[ay]
 
-    # Şehir ID'leri: eşleme tablosundan al, yoksa 0
-    cikis_id = sehir_mapping['cikis'].get(cikis, 0)
-    varis_id = sehir_mapping['varis'].get(varis, 0)
+    # Şehir ID'leri: eşleme tablosundan al, yoksa -1
+    cikis_id = sehir_mapping['cikis'].get(cikis, -1)
+    varis_id = sehir_mapping['varis'].get(varis, -1)
 
     satir = {
         'Gun'           : tarih.day,
