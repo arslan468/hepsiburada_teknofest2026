@@ -1,44 +1,24 @@
-import pandas as pd
-import numpy as np
+import os
 import math
-import json
 import sys
-from sklearn.model_selection import train_test_split
-import xgboost as xgb
-from ortools.linear_solver import pywraplp
+import json
+import pandas as pd
+from desi_tahmin import desi_tahmin_yap, modeli_egit_ve_kaydet as _desi_egit
 
 def modeli_egit_ve_kaydet():
-    df = pd.read_excel('Desi_talep.xlsx')
-    df['Tarih'] = pd.to_datetime(df['Tarih']) 
-
-    df['Ay'] = df['Tarih'].dt.month
-    df['Gun'] = df['Tarih'].dt.day
-    df['Haftanin_Gunu'] = df['Tarih'].dt.dayofweek
-    df['Hafta_Sonu'] = df['Haftanin_Gunu'].apply(lambda x: 1 if x >= 5 else 0)
-
-    df['Cikis_TM_ID'], _ = pd.factorize(df['Çıkış Transfer Merkezi'])
-    df['Varis_TM_ID'], _ = pd.factorize(df['Varış Transfer Merkezi'])
-
-    df = df.sort_values(by=['Cikis_TM_ID', 'Varis_TM_ID', 'Tarih'])
-    df['Dun_Desi'] = df.groupby(['Cikis_TM_ID', 'Varis_TM_ID'])['Toplam Desi'].shift(1)
-    df['Gecen_Hafta_Desi'] = df.groupby(['Cikis_TM_ID', 'Varis_TM_ID'])['Toplam Desi'].shift(7)
-    df['Son_3_Gun_Ortalama'] = df.groupby(['Cikis_TM_ID', 'Varis_TM_ID'])['Toplam Desi'].transform(lambda x: x.rolling(window=3).mean())
-    df.dropna(inplace=True)
-
-    X = df[['Cikis_TM_ID', 'Varis_TM_ID', 'Ay', 'Gun', 'Haftanin_Gunu', 'Hafta_Sonu', 'Dun_Desi', 'Gecen_Hafta_Desi', 'Son_3_Gun_Ortalama']]
-    y_log = np.log1p(df['Toplam Desi'])
-
-    model = xgb.XGBRegressor(n_estimators=150, learning_rate=0.1, random_state=42)
-    model.fit(X, y_log)
-    
-    model.save_model('HBAI_XGB_Model.json')
-    print("-> Yapay Zeka modeli eğitildi ve 'HBAI_XGB_Model.json' olarak kaydedildi!")
+    """
+    Desi tahmin modelini eger ve kaydeder.
+    Tum egitim mantigi desi_tahmin.py modulunde yonetilir.
+    """
+    dosya = 'desi_talep.xlsx' if os.path.exists('desi_talep.xlsx') else 'Desi_talep.xlsx'
+    df_talep = pd.read_excel(dosya)
+    _desi_egit(df_talep)
 
 def mesafe_hesapla(cikis, varis, df_koordinat):
     try:
-        cikis_temiz = str(cikis).strip().upper()
-        varis_temiz = str(varis).strip().upper()
-        temiz_sutun = df_koordinat['Transfer Merkezi'].astype(str).str.strip().str.upper()
+        cikis_temiz = str(cikis).strip().replace('i', 'İ').replace('ı', 'I').upper()
+        varis_temiz = str(varis).strip().replace('i', 'İ').replace('ı', 'I').upper()
+        temiz_sutun = df_koordinat['Transfer Merkezi'].astype(str).str.strip().str.replace('i', 'İ').str.replace('ı', 'I').str.upper()
         
         enlem1 = df_koordinat.loc[temiz_sutun == cikis_temiz, 'Enlem'].values[0]
         boylam1 = df_koordinat.loc[temiz_sutun == cikis_temiz, 'Boylam'].values[0]
@@ -54,25 +34,15 @@ def mesafe_hesapla(cikis, varis, df_koordinat):
         return 500.0
 
 def sistem_calistir_ve_json_don(cikis_sehri, varis_sehri, tarih_str):
-    df_maliyet = pd.read_excel('Araç_Kapasite_Maliyet.xlsx')
+    from ortools.linear_solver import pywraplp
+    df_maliyet   = pd.read_excel('Araç_Kapasite_Maliyet.xlsx')
     df_koordinat = pd.read_excel('Koordinatlar v2.xlsx')
-    df_filo = pd.read_excel('Kiralık_Araçlar.xlsx')
-    
-    model = xgb.XGBRegressor()
-    model.load_model('HBAI_XGB_Model.json') 
+    df_filo      = pd.read_excel('Kiralık_Araçlar.xlsx')
+    file_name    = 'desi_talep.xlsx' if __import__('os').path.exists('desi_talep.xlsx') else 'Desi_talep.xlsx'
+    df_talep     = pd.read_excel(file_name)
 
-    tarih = pd.to_datetime(tarih_str)
-    ay = tarih.month
-    gun = tarih.day
-    haftanin_gunu = tarih.dayofweek
-    hafta_sonu = 1 if haftanin_gunu >= 5 else 0
-
-    cikis_id, varis_id = 1, 2 
-    dun_desi, gecen_hafta_desi, son_3_gun_ort = 12000.0, 11500.0, 11800.0
-
-    girdi_verisi = np.array([[cikis_id, varis_id, ay, gun, haftanin_gunu, hafta_sonu, dun_desi, gecen_hafta_desi, son_3_gun_ort]])
-    tahmin_log = model.predict(girdi_verisi)
-    hedef_desi = float(np.expm1(tahmin_log)[0])
+    # Desi tahmini merkezi modülden yapılıyor
+    hedef_desi = desi_tahmin_yap(cikis_sehri, varis_sehri, tarih_str, df_talep)
 
     km_mesafe = mesafe_hesapla(cikis_sehri, varis_sehri, df_koordinat)
     tir_row = df_maliyet[df_maliyet['Araç Adı'] == 'Tır'].iloc[0]

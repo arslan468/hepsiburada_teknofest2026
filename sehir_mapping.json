@@ -1,0 +1,35 @@
+{
+  "cikis": {
+    "Balıkesir": 0,
+    "Bilecik": 1,
+    "Eskişehir": 2,
+    "Kocaeli": 3,
+    "Kütahya": 4,
+    "Manisa": 5,
+    "Mersin": 6,
+    "Sivas": 7,
+    "Tekirdağ": 8,
+    "Yalova": 9,
+    "İstanbul": 10,
+    "Şanlıurfa": 11
+  },
+  "varis": {
+    "Balıkesir": 0,
+    "Bilecik": 1,
+    "Denizli": 2,
+    "Erzincan": 3,
+    "Eskişehir": 4,
+    "Isparta": 5,
+    "Karaman": 6,
+    "Kütahya": 7,
+    "Manisa": 8,
+    "Mardin": 9,
+    "Mersin": 10,
+    "Sivas": 11,
+    "Tekirdağ": 12,
+    "Yalova": 13,
+    "Zonguldak": 14,
+    "İstanbul": 15,
+    "Şanlıurfa": 16
+  }
+}

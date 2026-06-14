@@ -86,3 +86,4 @@ def rotayi_optimize_et(cikis_sehri, varis_sehri, hedef_desi):
         print(f"\n--> TOPLAM OPERASYON MALIYETI: {toplam_fatura:,.2f} TL")
     else:
         print("hata")
+
