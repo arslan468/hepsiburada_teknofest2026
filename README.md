@@ -1,53 +1,328 @@
-# Hepsiburada & Teknofest 2026 - Yapay Zeka Destekli Lojistik Optimizasyonu
 
-Bu proje, Teknofest 2026 Lojistik Ağ Optimizasyonu yarışması (Temel İşlevli Çözüm / MVP aşaması) için geliştirilmiş, yapay zeka ve matematiksel optimizasyon destekli bir rota ve araç atama motorudur. 
+<div  align="center">
 
-Sistem, geçmiş kargo hacim verilerine dayanarak (Zaman Serisi Projeksiyonu) gelecek kargo hacmini (desi) tahmin eder. Ardından kiralık ve spot araç havuzunu kullanarak maliyeti minimize eden en verimli rotaları planlar. Tüm bu yapı, TypeScript ve Node.js kullanılarak uçtan uca modern bir web uygulaması olarak tasarlanmıştır.
+  
+
+# 🚛 Hepsiburada & Teknofest 2026
+
+### Yapay Zeka Destekli Lojistik Anahat Optimizasyonu
+
+  
+
+
+**TEKNOFEST 2026 Lojistik Ağ Optimizasyonu Yarışması — Temel İşlevli Çözüm (MVP)**
+
+  
+
+*Geçmiş kargo verilerinden talep tahmini yapan ve maliyet-minimize eden araç planlama simülatörü.*
+
+  
+
+</div>
+
+  
+
+---
+
+  
+
+## 📌 Proje Hakkında
+
+  
+
+Bu proje, **Teknofest 2026 Lojistik Ağ Optimizasyonu** yarışması için geliştirilmiş, uçtan uca çalışan bir yapay zeka destekli rota ve araç atama motorudur.
+
+  
+
+Sistem iki temel adımda çalışır:
+
+  
+
+1.  **Talep Tahmini:** Geçmiş kargo hacim verilerine (desi) dayalı zaman serisi projeksiyonu ile 11–17 Mayıs 2026 haftasına ait günlük talepleri tahmin eder.
+
+2.  **Maliyet Optimizasyonu:** Kiralık ve Spot araç filosunu kullanarak, yol üstü konsolidasyon heuristiği ile toplam nakliye maliyetini minimize eden atama planı oluşturur.
+
+  
+
+Tüm bu yapı, **TypeScript** ve **Node.js** kullanılarak modern bir full-stack web uygulaması olarak tasarlanmıştır.
+
+  
+
+---
+## 💰 Hesaplanan Minimum Maliyet Özeti
+* **Sefer Bilgisi:** 98 Kiralık 501 Spot olmak üzere planlanan toplam 599 sefer planlanmıştır.
+
+* **Kiralık Araç Detayları:** 70 Tır, 28 Kamyon seferi için hesaplanan maliyet 599.127 + 171.856 = 770.983 TL
+
+* **Spot Araç Detayları:** 114 Tır, 387 Kamyon seferi için hesaplanan maliyet 2.479.744 + 6.540.064 = 9.019.808 TL
+
+* **Toplam Maliyet:** 9.790.791 TL olarak hesaplanmıştır.
+
+* **Hesaplanan Tahmini Desi:** 11-17 Mayıs haftası için tahmin edilen toplam desi 5.052.037 Desidir.
+---
+
+  
 
 ## 🚀 Kullanılan Teknolojiler
 
-* **Frontend:** React, Vite, Tailwind CSS, Framer Motion (Animasyonlar), Lucide React (İkonlar)
-* **Backend:** Node.js, Express.js
-* **Tahmin & Optimizasyon:** TypeScript tabanlı özel Heuristic Algoritma (Mesafe hesaplama, Konsolidasyon, Spot/Kiralık Araç Maliyet Optimizasyonu)
-* **Veri İşleme:** `xlsx` ile Excel export, Node.js dosya sistemi entegrasyonu
+  
+
+| Katman | Teknoloji |
+
+|:---|:---|
+
+| **Frontend** | React 19, Vite 6, Tailwind CSS 4, Framer Motion, Lucide React |
+
+| **Backend** | Node.js, Express.js 4 |
+
+| **Tahmin & Optimizasyon** | TypeScript tabanlı Heuristic Algoritma (Haversine mesafe, Yol Üstü Konsolidasyon, Spot/Kiralık Maliyet Minimizasyonu) |
+
+| **Veri İşleme** | `xlsx` kütüphanesi ile Excel export, `fs` ile dosya sistemi entegrasyonu |
+
+| **Geliştirme Araçları** | tsx (TypeScript runner), esbuild, ESLint |
+
+  
+
+---
+
+  
 
 ## 📂 Proje Mimarisi
 
-1.  **Optimizasyon Motoru (`pipeline.ts`):** 
-    * `src/data/desi_talep.csv` verisini analiz ederek haftalık trendleri çıkartır ve gelecek talepleri hesaplar.
-    * Koordinat verileri üzerinden Haversine formülü ile şehirler arası mesafeleri tespit eder.
-    * Kiralık araç kapasitelerini doldurmaya öncelik verir, ardından boşlukları ve kalan yükleri yol üstü konsolidasyon algoritmasıyla Spot araçlarla destekler.
-    * Optimizasyon sonuçlarını `tahmin_desi.xlsx`, `arac_planlama.xlsx` ve dashboard verisi olarak `summary_dashboard.json`'a kaydeder.
-2.  **Express.js API (`server.ts`):** 
-    * Frontend ile motor arasındaki iletişimi sağlar. `/api/run-pipeline` isteği geldiğinde `pipeline.ts` komutunu arka planda tetikler.
-    * Optimizasyon sonuçlarını, özet verileri ve Excel raporlarını kullanıcıya iletir.
-3.  **Vite / React Arayüzü (`index.html` & `src/`):** 
-    * Elde edilen JSON formatındaki özet bilgileri, modern KPI kartları ve interaktif grafikler halinde görselleştirir.
+  
+
+```
+
+hepsiburada_teknofest2026/
+
+├── server.ts # Express.js API sunucusu (Backend)
+
+├── pipeline.ts # Tahmin + Optimizasyon motoru
+
+├── index.html # Uygulama giriş noktası
+
+├── vite.config.ts # Vite yapılandırması
+
+├── package.json # Bağımlılıklar ve script'ler
+
+├── tsconfig.json # TypeScript yapılandırması
+
+├── src/
+
+│ ├── App.tsx # Ana React bileşeni (Dashboard UI)
+
+│ ├── main.tsx # React giriş noktası
+
+│ ├── index.css # Global stiller
+
+│ └── data/
+
+│ ├── desi_talep.csv # 📊 Tarihsel kargo talep verisi (girdi)
+
+│ ├── tahmin_desi.xlsx # 📈 Üretilen talep tahmini (çıktı)
+
+│ ├── arac_planlama.xlsx # 🚛 Üretilen araç atama planı (çıktı)
+
+│ └── summary_dashboard.json # 📋 Dashboard özet verisi (çıktı)
+
+└── assets/
+
+```
+
+  
+
+### Bileşen Detayları
+
+  
+
+#### 1️⃣ Optimizasyon Motoru — `pipeline.ts`
+
+> Projenin beyni. Tüm iş mantığı burada çalışır.
+
+  
+
+-  `src/data/desi_talep.csv` verisinden haftalık trendleri çıkartarak gelecek talepleri hesaplar
+
+- Haversine formülü ile 18 şehir arasındaki mesafe matrisini oluşturur
+
+- Kiralık araçların kapasitesini öncelikli olarak doldurur
+
+- Kalan yükleri **yol üstü konsolidasyon** algoritmasıyla Spot araçlara dağıtır
+
+- Sonuçları `.xlsx` ve `.json` formatında dışa aktarır
+
+  
+
+#### 2️⃣ API Sunucusu — `server.ts`
+
+> Frontend ile motor arasındaki köprü.
+
+  
+
+-  `POST /api/run-pipeline` → Pipeline'ı tetikler
+
+-  `GET /api/dashboard-summary` → Özet KPI verilerini döner
+
+-  `GET /api/download/tahmin-desi` → Tahmin Excel dosyasını indirir
+
+-  `GET /api/download/arac-planlama` → Planlama Excel dosyasını indirir
+
+  
+
+#### 3️⃣ Dashboard Arayüzü — `src/App.tsx`
+
+> Sonuçları görselleştiren modern web arayüzü.
+
+  
+
+- Toplam maliyet, desi, sefer sayısı gibi KPI kartları
+
+- Günlük maliyet dağılımı grafikleri
+
+- Şehir bazlı istatistikler ve interaktif harita
+
+- Excel rapor indirme butonları
+
+  
+
+---
+
+  
 
 ## 🛠 Kurulum ve Çalıştırma
 
-Projeyi bilgisayarınızda çalıştırmak için aşağıdaki adımları sırasıyla uygulayabilirsiniz:
+  
 
-### 1. Bağımlılıkları Yükleyin
-Proje klasörünün içerisinde bir terminal açın ve gerekli paketleri indirmek için şu komutu çalıştırın:
+### Ön Gereksinimler
+
+  
+
+- [Node.js](https://nodejs.org/) (v18 veya üzeri)
+
+- npm (Node.js ile birlikte gelir)
+
+  
+
+### 1. Projeyi Klonlayın
+
 ```bash
-npm install
+
+git  clone  https://github.com/hepsiburada/hepsiburada_teknofest2026.git
+
+cd  hepsiburada_teknofest2026
+
 ```
 
-### 2. Uygulamayı Başlatın
-Paketler yüklendikten sonra, geliştirme sunucusunu (hem backend hem frontend) başlatmak için şu komutu girin:
+  
+
+### 2. Bağımlılıkları Yükleyin
+
 ```bash
-npm run dev
+
+npm  install
+
 ```
 
-### 3. Kullanıma Başlayın
-Terminalde "Lojistik Server çalışıyor" mesajını gördükten sonra tarayıcınızdan şu adrese giderek uygulamaya erişebilirsiniz:
-**http://localhost:3000**
+  
 
-## 📦 Production (Üretim) Ortamı İçin Derleme
+### 3. Geliştirme Sunucusunu Başlatın
 
-Projeyi production standartlarında çalıştırılabilir bir formata (build) dönüştürmek ve ayağa kaldırmak isterseniz:
 ```bash
-npm run build
-npm run start
+
+npm  run  dev
+
 ```
+
+  
+
+### 4. Tarayıcıda Açın
+
+Terminalde `Lojistik Server çalışıyor` mesajını gördükten sonra:
+
+  
+
+👉 **http://localhost:3000**
+
+  
+
+---
+
+  
+
+## 📦 Kullanılabilir Komutlar
+
+  
+
+| Komut | Açıklama |
+
+|:---|:---|
+
+| `npm install` | Proje bağımlılıklarını indirir (`node_modules/` klasörüne) |
+
+| `npm run dev` | Geliştirme sunucusunu başlatır (backend + frontend) |
+
+| `npm run build` | Production için derlenmiş çıktı üretir (`dist/` klasörüne) |
+
+| `npm run start` | Derlenmiş production sunucusunu çalıştırır |
+
+| `npm run lint` | TypeScript tip kontrolü yapar |
+
+  
+
+---
+
+  
+
+## 🔄 Çalışma Akışı
+
+  
+
+```
+
+┌──────────────────┐ ┌─────────────────────┐ ┌──────────────────┐
+
+│ 📊 Tarihsel │ │ 🧠 pipeline.ts │ │ 📈 Çıktılar │
+
+│ Kargo Verisi │────▶│ │────▶│ │
+
+│ (desi_talep.csv)│ │ 1. Talep Tahmini │ │ tahmin_desi.xlsx│
+
+│ │ │ 2. Mesafe Hesabı │ │ arac_planlama.xlsx│
+
+│ │ │ 3. Araç Atama │ │ summary.json │
+
+│ │ │ 4. Maliyet Optim. │ │ │
+
+└──────────────────┘ └─────────────────────┘ └────────┬─────────┘
+
+│
+
+▼
+
+┌──────────────────┐
+
+│ 🖥 Dashboard │
+
+│ (React + Vite) │
+
+│ localhost:3000 │
+
+└──────────────────┘
+
+```
+
+  
+
+---
+
+  
+
+<div  align="center">
+
+  
+
+**Hepsiburada × Teknofest 2026** · Lojistik Ağ Optimizasyonu
+
+  
+
+</div>
