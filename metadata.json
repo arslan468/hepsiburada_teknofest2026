@@ -1,0 +1,6 @@
+{
+  "name": "Yapay Zeka Destekli Lojistik Anahat Optimizasyonu",
+  "description": "TEKNOFEST 2026 Hepsiburada Lojistik Anahat Optimizasyonu Yarışması için Makine Öğrenmesi destekli desi talep tahmini ve Karma Tamsayılı Doğrusal Programlama (MILP) tabanlı araç planlama simülatörü.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
