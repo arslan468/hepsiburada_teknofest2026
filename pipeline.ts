@@ -538,8 +538,7 @@ function main() {
   const wbTahmin = XLSX.utils.book_new();
   const wsTahmin = XLSX.utils.json_to_sheet(tahminSheetData);
   XLSX.utils.book_append_sheet(wbTahmin, wsTahmin, "Tahmin Edilen Desiler");
-  const bufTahmin = XLSX.write(wbTahmin, { bookType: "xlsx", type: "buffer" });
-  fs.writeFileSync(path.join(dataDir, "tahmin_desi.xlsx"), bufTahmin);
+  XLSX.writeFile(wbTahmin, path.join(dataDir, "tahmin_desi.xlsx"));
   console.log("[OK] tahmin_desi.xlsx başarıyla yazıldı.");
 
   // 2. Planlama ve Optimizasyon
@@ -560,8 +559,7 @@ function main() {
   const wbPlan = XLSX.utils.book_new();
   const wsPlan = XLSX.utils.json_to_sheet(planSheetData);
   XLSX.utils.book_append_sheet(wbPlan, wsPlan, "Araç Planlama");
-  const bufPlan = XLSX.write(wbPlan, { bookType: "xlsx", type: "buffer" });
-  fs.writeFileSync(path.join(dataDir, "arac_planlama.xlsx"), bufPlan);
+  XLSX.writeFile(wbPlan, path.join(dataDir, "arac_planlama.xlsx"));
   console.log("[OK] arac_planlama.xlsx başarıyla yazıldı.");
 
   // 3. Web Dashboard için summary_dashboard.json çıktısı
